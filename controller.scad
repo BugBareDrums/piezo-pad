@@ -14,14 +14,23 @@ piezoDiameter = 20;
 numberOfPads = 16;
 numberOfPadsPerRow = sqrt(numberOfPads);
 gap = 5;
-bodyHeight = 20;
+bodyHeight = 25;
+electronicsCutoutHeight = 10;
 bodyWidth = (padWidth + (gap * 2)) * numberOfPadsPerRow;
+wireHoleDiameter = 1.5;
+sinkDepth = 5;
+
+usbWidth = 8.1;
+teensyWidth = 17.84;
+teensyLength = 61;
+teensyHeight = 4.5;
 
 module pad(pos = [ 0, 0 ]) {
   translate(pos) {
     difference() {
       roundedcube([ padWidth, padWidth, padHeight ], false, 4, "all");
 
+      // cushion cutout
       translate([ wallThickness, wallThickness, padHeight / 2 ]) {
         cube([ cushionCutout, cushionCutout, padHeight ]);
       }
@@ -33,12 +42,15 @@ module cushion(pos = [ 0, 0 ]) {
   translate(pos) {
     difference() {
       cube([ cushionWidth, cushionWidth, cushionHeight ]);
+
+      // piezo cutout
       translate([ cushionCenter, cushionCenter, cushionHeight ]) {
         resize([ piezoDiameter, piezoDiameter, 3 ]) sphere(r = 5);
       }
 
+      // wire hole
       translate([ cushionCenter, cushionCenter + (piezoDiameter / 2) ])
-          cylinder(h = cushionWidth + 10, r = 1);
+          cylinder(h = cushionWidth + 10, r = wireHoleDiameter);
     }
   }
 }
@@ -46,14 +58,41 @@ module cushion(pos = [ 0, 0 ]) {
 module controllerBody(pos = [ 0, 0 ]) {
   translate(pos) {
     difference() {
+      // body
       roundedcube([ bodyWidth, bodyWidth, bodyHeight ], false, 4, "all");
-      translate([ gap * 2, gap * 2, 10 ]) {
+
+      // electronics cutout
+      translate([ gap * 2, gap * 2, 0 ]) {
+        cube([
+          bodyWidth - (gap * 4), bodyWidth - (gap * 4),
+          electronicsCutoutHeight
+        ]);
+      }
+
+      translate([ gap * 1.5, gap * 1.5, 0 ]) {
+        cube([ bodyWidth - (gap * 3), bodyWidth - (gap * 3), 2 ]);
+      }
+
+      // USB cutout
+      translate([ bodyWidth / 2, 0, bodyHeight / 5 ]) {
+        cube([ usbWidth, 30, teensyHeight ]);
+      }
+
+      translate([ gap * 2, gap * 2, bodyHeight - sinkDepth ]) {
         for (i = [0:numberOfPads - 1]) {
           translate([
             (i % numberOfPadsPerRow) * (bodyWidth / numberOfPadsPerRow),
             floor(i / numberOfPadsPerRow) * (bodyWidth / numberOfPadsPerRow)
           ]) {
-            cube([ cushionWidth, cushionWidth, 1000 ]);
+            // cushion cutout
+            cube([ cushionWidth, cushionWidth, 100 ]);
+
+            // wire hole
+            translate([
+              cushionCenter, cushionCenter + (piezoDiameter / 2), -bodyHeight
+            ]) {
+              cylinder(h = bodyHeight + 5, r = wireHoleDiameter);
+            }
           }
         }
       }
